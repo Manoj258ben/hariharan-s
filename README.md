@@ -215,3 +215,5 @@ backend\.venv\Scripts\python.exe -c "from backend.app.database import SessionLoc
 2. Click **Create Live Backup** to generate an immediate verified SQLite backup.
 3. To restore: select any listed backup and click **Restore Backup**. Confirm the dialog by typing `CONFIRM_RESTORE`. An automatic safety snapshot will be taken before the restore is executed.
 # hariharan-s
+#   h a r i h a r a n - s  
+ 
