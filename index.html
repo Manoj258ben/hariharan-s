@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StockSense — Pure Vanilla HTML/CSS/JS Retail ERP & Rural Kirana POS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/><path d='m3.3 7 8.7 5 8.7-5'/><path d='M12 22V12'/></svg>" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for High-Performance Canvas Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- StockSense Pure Vanilla CSS Design System -->
+    <link rel="stylesheet" href="/assets/index-style.css" />
+  </head>
+  <body>
+    <!-- Global Loading Indicator -->
+    <div id="app-loader" style="position:fixed; inset:0; background:rgba(255,255,255,0.8); z-index:9999; display:none; align-items:center; justify-content:center; flex-direction:column; gap:0.5rem;">
+      <div style="width:36px; height:36px; border:3px solid #cbd5e1; border-top-color:#10b981; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+      <div style="font-size:0.75rem; font-weight:700; color:#0f172a;">Syncing SQLite WAL Engine...</div>
+    </div>
+
+    <!-- Application Header / Topbar -->
+    <header class="app-header">
+      <!-- Left: Brand Logo & Title -->
+      <div class="brand-section">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+            <path d="m3.3 7 8.7 5 8.7-5"/>
+            <path d="M12 22V12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">
+            <span>StockSense</span>
+            <span class="brand-badge">Pure HTML5</span>
+          </div>
+          <div class="brand-subtitle">Kirana Analytics & Reorder Planner</div>
+        </div>
+      </div>
+
+      <!-- Right: Action Buttons, Date, Notifications & Profile -->
+      <div class="topbar-actions">
+        <!-- Date Selector -->
+        <div class="date-picker-wrap" title="Analysis As-Of Date">
+          <span style="color:#059669; font-size:0.85rem;">📅</span>
+          <span style="font-size:0.7rem; color:#64748b; font-weight:600;">As-Of:</span>
+          <input type="date" id="as-of-date-input" value="2026-09-30" onchange="changeAsOfDate(this.value)" />
+        </div>
+
+        <!-- Refresh Button -->
+        <button class="topbar-btn" onclick="loadAllData()" title="Refresh live data from SQLite">
+          <span>🔄</span>
+        </button>
+
+        <!-- Language Selector -->
+        <div class="date-picker-wrap" style="padding:0.35rem 0.5rem;">
+          <span>🌐</span>
+          <select id="language-select" onchange="toggleLanguage()" style="border:none; background:transparent; font-size:0.75rem; font-weight:600; color:#334155; outline:none; cursor:pointer;">
+            <option value="en">English</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+          </select>
+        </div>
+
+        <!-- Storage Status Indicator -->
+        <div class="topbar-btn" style="background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8;" title="SQLite Database Connected">
+          <span>💾</span>
+          <span>Storage</span>
+        </div>
+
+        <!-- Shopkeeper Mode Toggle Button -->
+        <button class="topbar-btn btn-emerald" onclick="navigateTo('rural')" title="Open Simple Shopkeeper Mode (Rural)">
+          <span>📱</span>
+          <span>Shopkeeper Mode</span>
+        </button>
+
+        <!-- Upload Data Button -->
+        <button class="topbar-btn" onclick="openUploadModal()" title="Upload Excel or CSV file">
+          <span>📤</span>
+          <span>Upload Data</span>
+        </button>
+
+        <!-- Notifications Bell -->
+        <div style="position:relative;">
+          <button class="notif-btn" onclick="toggleNotifDropdown()" title="Reorder Threshold Alerts">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+            </svg>
+            <span class="notif-badge" id="topbar-notif-badge" style="display:none;">0</span>
+          </button>
+
+          <!-- Notifications Dropdown (Directly Under Bell) -->
+          <div id="notif-backdrop" class="dropdown-backdrop hidden" onclick="toggleNotifDropdown(false)"></div>
+          <div id="notif-dropdown-card" class="dropdown-menu hidden" style="width:380px;">
+            <div id="notif-dropdown-inner"></div>
+          </div>
+        </div>
+
+        <!-- Profile Avatar Trigger (Brown Avatar with Name and Admin Badge) -->
+        <div class="profile-container">
+          <button
+            type="button"
+            id="topbar-profile-trigger"
+            class="profile-trigger"
+            onclick="toggleProfileDropdown()"
+            title="Click to open User & Store Profile"
+          >
+            <div class="profile-avatar">AD</div>
+            <div class="profile-meta">
+              <span class="profile-name">Lead System Administrator</span>
+              <div class="profile-role-row">
+                <span class="role-badge">ADMIN</span>
+                <span style="font-size:0.65rem; color:#94a3b8;">▼</span>
+              </div>
+            </div>
+          </button>
+
+          <!-- Profile Dropdown (Directly UNDER the Profile Trigger) -->
+          <div id="profile-backdrop" class="dropdown-backdrop hidden" onclick="toggleProfileDropdown(false)"></div>
+          <div id="profile-dropdown-card" class="dropdown-menu hidden">
+            <div id="profile-dropdown-inner"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <nav class="app-nav" id="app-navigation"></nav>
+
+    <!-- Main Dynamic Content Container -->
+    <main class="main-content" id="main-content">
+      <!-- Injected dynamically via pure JavaScript -->
+    </main>
+
+    <!-- Quick Upload Modal -->
+    <div id="upload-modal" class="modal-overlay hidden">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <strong style="font-size:0.95rem; color:#0f172a;">📤 Upload Excel or CSV Sales & Stock Data</strong>
+          <button onclick="closeUploadModal()" style="background:none; border:none; font-size:1.25rem; color:#64748b; cursor:pointer;">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:0.75rem; color:#64748b;">
+            Upload your `.xlsx` or `.csv` files to update live product counts, sales records, and lot shelf-life data. The dashboard charts, KPIs, and inventory will project the details immediately!
+          </p>
+
+          <div style="border:2px dashed #10b981; border-radius:12px; padding:1.75rem; text-align:center; background:#f0fdf4; cursor:pointer;" onclick="document.getElementById('excel-file-input').click()">
+            <div style="font-size:2rem; margin-bottom:0.25rem;">📊</div>
+            <strong style="font-size:0.875rem; color:#065f46; display:block;">Click to browse or drop Excel / CSV file here</strong>
+            <span style="font-size:0.7rem; color:#059669;">Supports .xlsx and .csv files</span>
+            <input type="file" id="excel-file-input" accept=".xlsx,.csv" style="display:none;" onchange="handleExcelFileUpload(this)" />
+          </div>
+
+          <div id="upload-status" style="font-size:0.75rem; margin-top:0.5rem;"></div>
+
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.75rem; margin-top:0.5rem;">
+            <div style="font-size:0.7rem; font-weight:700; color:#475569; margin-bottom:0.4rem;">💡 Need sample format templates?</div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <a href="/api/imports/template.xlsx" download="StockSense_Products_Template.xlsx" class="topbar-btn" style="color:#059669; border-color:#a7f3d0; text-decoration:none;">
+                📥 Download Excel Template (.xlsx)
+              </a>
+              <a href="/api/imports/template.csv" download="StockSense_Products_Template.csv" class="topbar-btn" style="color:#2563eb; border-color:#bfdbfe; text-decoration:none;">
+                📄 Download CSV Template (.csv)
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeUploadModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script: Pure Vanilla HTML5 and ES6 JavaScript Application -->
+    <script src="/assets/index-core.js"></script>
+    <script>
+      function openUploadModal() {
+        document.getElementById('upload-modal').classList.remove('hidden');
+        document.getElementById('upload-status').innerHTML = '';
+      }
+      function closeUploadModal() {
+        document.getElementById('upload-modal').classList.add('hidden');
+      }
+      async function handleExcelFileUpload(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const statusEl = document.getElementById('upload-status');
+        statusEl.textContent = `Analyzing ${file.name}...`;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const analysisResponse = await fetch('/api/database/analyze-excel', {
+            method: 'POST',
+            body: formData
+          });
+          const analysis = await analysisResponse.json().catch(() => ({}));
+          if (!analysisResponse.ok) {
+            throw new Error(analysis.detail || `Analysis failed with status HTTP ${analysisResponse.status}`);
+          }
+
+          statusEl.textContent = `Analysis complete (${analysis.total_rows || 0} rows). Importing product and stock data into SQLite...`;
+          const res = await fetch('/api/imports/workbook', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(data.detail || `Upload failed with status HTTP ${res.status}`);
+          }
+
+          statusEl.textContent = '';
+          const result = document.createElement('div');
+          result.style.cssText = 'color:#065f46; font-weight:600; white-space:pre-line;';
+          const metrics = analysis.analysis;
+          const insight = metrics && metrics.insights && metrics.insights.length
+            ? `\n${metrics.insights.join('\n')}`
+            : (analysis.summary || 'No rows available to analyze.');
+          result.textContent = `Analysis: ${analysis.total_rows || 0} rows across ${(analysis.sheets || []).length} sheet(s).${metrics ? `\nMonetary total: ₹${metrics.total_monetary_value}; average rate: ₹${metrics.average_rate}.` : ''}${insight}\n\n${data.message || 'File uploaded and SQLite updated!'}`;
+          statusEl.appendChild(result);
+          setTimeout(() => {
+            closeUploadModal();
+            loadAllData();
+          }, 1200);
+        } catch (err) {
+          statusEl.textContent = `Upload or analysis error: ${err.message}`;
+          statusEl.style.color = '#e11d48';
+        }
+      }
+    </script>
+    <style>
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </body>
+</html>
