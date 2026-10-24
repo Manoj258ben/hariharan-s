@@ -89,11 +89,7 @@ StockSense is an end-to-end client-server application built with a **React 19 + 
 - **Last Active Administrator Safeguard**: The system blocks any attempt to deactivate or demote the last remaining active administrator account.
 
 ### 10. Default System Credentials
-When the database is initialized, two default accounts are provisioned:
-- **Administrator**: `admin` / `Admin@StockSense2026`
-- **Shopkeeper**: `shopkeeper` / `Shop@StockSense2026`
-
-*Important: Change these passwords in production via the User Management panel.*
+When the database is initialized, default accounts may be provisioned. Set unique credentials immediately and never use demo credentials in production.
 
 ### 11. Immutable Audit Logging
 - Immutable-by-normal-application audit table (`audit_logs_v2`).
@@ -134,7 +130,7 @@ Create a `.env` file in the project root:
 STOCKSENSE_DB_PATH=backend/stocksense.db
 STOCKSENSE_CUSTOMER_DB_PATH=backend/customers.db
 STOCKSENSE_USER_DB_PATH=backend/users.db
-JWT_SECRET_KEY=stocksense_super_secure_jwt_secret_key_2026_rural_kirana
+JWT_SECRET_KEY=<generate-a-unique-random-secret>
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=120
 AS_OF_DATE=2026-09-30
 SERVICE_LEVEL_Z=1.65
@@ -168,7 +164,7 @@ Open your browser at:
 - **Frontend Application**: `http://localhost:5173`
 - **Interactive API Docs (Swagger UI)**: `http://127.0.0.1:8000/docs`
 - **Shopkeeper Mode**: Click `Shopkeeper Mode (Rural)` on the sidebar or topbar
-- **Secure Admin Panel**: Click `Secure Admin Panel` or the profile avatar (Log in with `admin` / `Admin@StockSense2026`)
+- **Secure Admin Panel**: Click `Secure Admin Panel` or the profile avatar and sign in with your configured administrator account.
 
 ---
 
@@ -218,5 +214,4 @@ backend\.venv\Scripts\python.exe -c "from backend.app.database import SessionLoc
 1. Navigate to **Secure Admin Panel** -> **Database Backup & Health**.
 2. Click **Create Live Backup** to generate an immediate verified SQLite backup.
 3. To restore: select any listed backup and click **Restore Backup**. Confirm the dialog by typing `CONFIRM_RESTORE`. An automatic safety snapshot will be taken before the restore is executed.
-#   h a r i h a r a n - s  
- 
+# hariharan-s
